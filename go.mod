@@ -1,3 +1,3 @@
-module github.com/lcrownover/cfingestor
+module github.com/uoracs/cfingestor
 
-go 1.21.5
+go 1.22.1
