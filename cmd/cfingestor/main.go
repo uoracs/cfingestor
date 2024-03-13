@@ -59,7 +59,8 @@ func SetCurrentHash(h string) error {
 }
 
 func main() {
-	filter_usernames := []string{"adm-lcrown", "adm-marka", "adm-wwinter", "root", "swmgr"}
+	// filter_usernames := []string{"adm-lcrown", "adm-marka", "adm-wwinter", "root", "swmgr"}
+	// filter_projects := []string{}
 
 	mux := http.NewServeMux()
 
@@ -133,9 +134,9 @@ func main() {
 	slog.Info("Creating coldfront objects")
 	var users []coldfront.User
 	for _, u := range manifest.Users {
-		if slices.Contains(filter_usernames, u.Username) {
-			continue
-		}
+		// if slices.Contains(filter_usernames, u.Username) {
+		// 	continue
+		// }
 		users = append(users, coldfront.NewUser(u.Username, u.Firstname, u.Lastname))
 	}
 	var projects []coldfront.Project
@@ -149,11 +150,8 @@ func main() {
 	for _, p := range manifest.Projects {
 		for _, u := range p.Users {
 			a := coldfront.NewAssociation(u, p.Name)
-			if u == p.Owner {
-				a.Fields.Role = []string{"PI"}
-			}
 			if slices.Contains(p.Admins, u) {
-				a.Fields.Role = []string{"Manager"}
+                a.SetManager()
 			}
 			associations = append(associations, a)
 		}

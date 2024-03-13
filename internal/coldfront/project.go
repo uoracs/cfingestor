@@ -50,7 +50,7 @@ func NewProjectFields(title, pi string) ProjectFields {
 		Title:          title,
 		ForceReview:    false,
 		RequiresReview: true,
-		FieldOfScience: []string{""},
+		FieldOfScience: []string{"Other"},
 		Pi:             []string{pi},
 		Status:         []string{"Active"},
 	}

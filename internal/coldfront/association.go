@@ -72,9 +72,12 @@ func NewAssociationFields(user, project string) AssociationFields {
 	}
 }
 
-func (a Association) withManager() Association {
+func (a *Association) SetManager()  {
 	a.Fields.Role = []string{"Manager"}
-	return a
+}
+
+func (a *Association) SetPI() {
+	a.Fields.Role = []string{"PI"}
 }
 
 func (a Association) withNotifications(n bool) Association {
