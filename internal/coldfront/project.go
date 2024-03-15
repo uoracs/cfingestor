@@ -3,6 +3,9 @@ package coldfront
 import (
 	"encoding/json"
 	"fmt"
+	"log/slog"
+	"os"
+	"os/exec"
 )
 
 type Project struct {
@@ -84,4 +87,23 @@ func (p Project) withRequiresReview(r bool) Project {
 func (p Project) withStatus(s []string) Project {
 	p.Fields.Status = s
 	return p
+}
+
+func saveProjects(projects []Project) {
+	slog.Info("Saving projects")
+	projectBytes, err := json.Marshal(projects)
+	if err != nil {
+		panic(err)
+	}
+	err = os.WriteFile(ingestDir("projects.json"), projectBytes, 0644)
+	if err != nil {
+		panic(err)
+	}
+}
+
+// Loading projects is pretty easy, we don't need to do anything special
+func cfLoadProjects() {
+	slog.Info("Loading projects into coldfront")
+	cmd := exec.Command(coldfrontCommand, "loaddata", "--format=json", ingestDir("projects.json"))
+	_ = cmd.Run()
 }

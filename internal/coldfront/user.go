@@ -3,6 +3,9 @@ package coldfront
 import (
 	"encoding/json"
 	"fmt"
+	"log/slog"
+	"os"
+	"os/exec"
 )
 
 type User struct {
@@ -72,4 +75,23 @@ func (u User) withStaff(s bool) User {
 func (u User) withSuperuser(s bool) User {
 	u.Fields.IsSuperuser = s
 	return u
+}
+
+func saveUsers(users []User) {
+	slog.Info("Saving users")
+	userBytes, err := json.Marshal(users)
+	if err != nil {
+		panic(err)
+	}
+	err = os.WriteFile(ingestDir("users.json"), userBytes, 0644)
+	if err != nil {
+		panic(err)
+	}
+}
+
+// Loading users is pretty easy, we don't need to do anything special
+func cfLoadUsers() {
+	slog.Info("Loading users into coldfront")
+	cmd := exec.Command(coldfrontCommand, "loaddata", "--format=json", ingestDir("users.json"))
+	_ = cmd.Run()
 }
