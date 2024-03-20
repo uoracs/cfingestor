@@ -1,6 +1,6 @@
 # cfingestor
 
-Simple web server that accepts a specifically-formatted payload and outputs Coldfront-compatible import files.
+Simple web server that accepts a specifically-formatted payload and syncs those associations with Coldfront.
 
 To run it, activate the coldfront virtual environment, then run the server like this:
 
