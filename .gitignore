@@ -21,3 +21,5 @@
 go.work
 
 manifest.json
+
+venv/

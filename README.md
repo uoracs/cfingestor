@@ -2,6 +2,14 @@
 
 Simple web server that accepts a specifically-formatted payload and outputs Coldfront-compatible import files.
 
+To run it, activate the coldfront virtual environment, then run the server like this:
+
+```bash
+coldfront shell < /path/to/main.py
+```
+
+Yes this is super ugly but it's just a stop-gap until we can convert to coldfront full-time.
+
 The input data should look like this:
 
 ```json
@@ -43,3 +51,4 @@ The input data should look like this:
   ]
 }
 ```
+
