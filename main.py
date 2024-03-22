@@ -504,8 +504,10 @@ def ingest_post_handler():
 
     for association in association_tracker.remaining():
         try:
+            f"deactivating association {association.user.username} -> {association.project.title}"
             association.status = cf_status_inactive
             association.save()
+            f"deactivated association {association.user.username} -> {association.project.title}"
         except Exception as e:
             return {
                 "status": f"Error deactivating association {association.user.username} -> {association.project.title}: {e}"
@@ -611,6 +613,7 @@ def ingest_post_handler():
             allocation_user_tracker.tick(cf_user, cf_allocation)
     for allocation_user in allocation_user_tracker.remaining():
         try:
+            f"removing allocation user {allocation_user.user.username} -> {allocation_user.allocation.project.title}"
             allocation_user.status = cf_alloc_user_status_removed
             allocation_user.save()
         except Exception as e:
