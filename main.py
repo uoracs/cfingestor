@@ -397,6 +397,9 @@ def ingest_post_handler():
         if user.username == "admin":
             # skip django admin
             continue
+        if not user.is_active:
+            # skip deactivated users
+            continue
         logging.info(f"deactivating user {user.username}")
         try:
             user.is_active = False
