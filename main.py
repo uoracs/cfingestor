@@ -43,7 +43,12 @@ def lock_ingest():
 
 
 def unlock_ingest():
-    os.remove(f"{RUN_DIR}/ingest.lock")
+    if is_ingest_locked():
+        os.remove(f"{RUN_DIR}/ingest.lock")
+
+def exit_error(obj: dict) -> dict:
+    unlock_ingest()
+    return obj
 
 
 # unlock ingest if it's locked
@@ -316,20 +321,20 @@ def manifest_post_handler(manifest: Manifest, content_hash: str):
 
     current_hash = get_current_hash()
     if content_hash == current_hash:
-        return {"status": "Manifest already saved", "hash": content_hash}, 200
+        return exit_error({"status": "Manifest already saved", "hash": content_hash}), 200
 
     try:
         manifest.save_to_file(f"{RUN_DIR}/manifest.json")
     except:
-        return {"status": "Error saving manifest"}, 500
+        return exit_error({"status": "Error saving manifest"}), 500
 
     try:
         set_current_hash(content_hash)
     except:
-        return {"status": "Error saving hash"}, 500
+        return exit_error({"status": "Error saving hash"}), 500
 
     logging.info("Manifest saved successfully")
-    return {"status": "Manifest saved successfully", "hash": content_hash}, 201
+    return exit_error({"status": "Manifest saved successfully", "hash": content_hash}), 201
 
 
 def manifest_get_handler():
@@ -338,14 +343,14 @@ def manifest_get_handler():
     try:
         manifest = Manifest.load_from_file(f"{RUN_DIR}/manifest.json")
     except:
-        return {"status": "Error loading manifest"}, 500
+        return exit_error({"status": "Error loading manifest"}), 500
     return manifest.to_json(), 200
 
 
 def ingest_get_handler():
     l = is_ingest_locked()
     if l:
-        return {"status": "Ingest is locked"}, 425
+        return exit_error({"status": "Ingest is locked"}), 425
     return {"status": "Ingest is not locked"}
 
 
@@ -353,7 +358,7 @@ def ingest_post_handler():
     logging.info("Received POST request on /ingest")
     l = is_ingest_locked()
     if l:
-        return {"status": "Ingest is locked"}, 425
+        return exit_error({"status": "Ingest is locked"}), 425
     lock_ingest()
     logging.info("ingest locked")
 
@@ -361,7 +366,7 @@ def ingest_post_handler():
     try:
         manifest = Manifest.load_from_file(f"{RUN_DIR}/manifest.json")
     except:
-        return {"status": "Error loading manifest"}, 500
+        return exit_error({"status": "Error loading manifest"}), 500
     logging.info("manifest read successfully")
 
     cfmanager = ColdfrontModelManager()
@@ -385,7 +390,7 @@ def ingest_post_handler():
                 logging.info(f"created user {user.username}")
             except Exception as e:
                 logging.error(f"error creating user {user.username}: {e}")
-                return {"status": f"Error creating user {user.username}: {e}"}, 500
+                return exit_error({"status": f"Error creating user {user.username}: {e}"}), 500
         cfuser = User.objects.get(username=user.username)
         if not cfuser.is_active:
             logging.info(f"activating user {user.username}")
@@ -407,7 +412,7 @@ def ingest_post_handler():
             logging.info(f"deactivated user {user.username}")
         except Exception as e:
             logging.error(f"error deactivating user {user.username}: {e}")
-            return {"status": f"Error deactivating user {user.username}: {e}"}, 500
+            return exit_error({"status": f"Error deactivating user {user.username}: {e}"}), 500
     cfmanager.refresh_users()
     logging.info("users synced successfully")
 
@@ -419,19 +424,19 @@ def ingest_post_handler():
         if project.name not in [p.title for p in cfmanager.coldfront_projects]:
             logging.info(f"creating project {project.name}")
             try:
+                cfpi = User.objects.get(username=project.owner)
                 Project.objects.create(
                     title=project.name,
-                    pi=project.owner,
+                    pi=cfpi,
                     description="enter description",
                     status=project_active_status,
                     requires_review=False,
                     force_review=False,
-                    field_of_science=[],
                 )
                 logging.info(f"created project {project.name}")
             except Exception as e:
                 logging.error(f"error creating project {project.name}: {e}")
-                return {"status": f"Error creating project {project.name}: {e}"}, 500
+                return exit_error({"status": f"Error creating project {project.name}: {e}"}), 500
         cfproject = Project.objects.get(title=project.name)
         cfproject.requires_review = True
         cfproject.status = project_active_status
@@ -447,7 +452,7 @@ def ingest_post_handler():
             logging.info(f"archiving project {project.name}")
         except Exception as e:
             logging.error(f"error deactivating project {project.name}: {e}")
-            return {"status": f"Error deactivating project {project.name}: {e}"}, 500
+            return exit_error({"status": f"Error deactivating project {project.name}: {e}"}), 500
     cfmanager.refresh_projects()
     logging.info("projects synced successfully")
 
@@ -558,7 +563,7 @@ def ingest_post_handler():
                 logging.info(f"created allocation {project.name}")
             except Exception as e:
                 logging.error(f"error creating allocation {project.name}: {e}")
-                return {"status": f"Error creating allocation {project.name}: {e}"}, 500
+                return exit_error({"status": f"Error creating allocation {project.name}: {e}"}), 500
         allocation_tracker.tick(cf_allocation)
     for remaining_allocation in allocation_tracker.remaining():
         if remaining_allocation.status == cf_alloc_status_expired:
