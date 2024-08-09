@@ -46,6 +46,7 @@ def unlock_ingest():
     if is_ingest_locked():
         os.remove(f"{RUN_DIR}/ingest.lock")
 
+
 def exit_error(obj: dict) -> dict:
     unlock_ingest()
     return obj
@@ -321,7 +322,9 @@ def manifest_post_handler(manifest: Manifest, content_hash: str):
 
     current_hash = get_current_hash()
     if content_hash == current_hash:
-        return exit_error({"status": "Manifest already saved", "hash": content_hash}), 200
+        return exit_error(
+            {"status": "Manifest already saved", "hash": content_hash}
+        ), 200
 
     try:
         manifest.save_to_file(f"{RUN_DIR}/manifest.json")
@@ -334,7 +337,9 @@ def manifest_post_handler(manifest: Manifest, content_hash: str):
         return exit_error({"status": "Error saving hash"}), 500
 
     logging.info("Manifest saved successfully")
-    return exit_error({"status": "Manifest saved successfully", "hash": content_hash}), 201
+    return exit_error(
+        {"status": "Manifest saved successfully", "hash": content_hash}
+    ), 201
 
 
 def manifest_get_handler():
@@ -390,7 +395,9 @@ def ingest_post_handler():
                 logging.info(f"created user {user.username}")
             except Exception as e:
                 logging.error(f"error creating user {user.username}: {e}")
-                return exit_error({"status": f"Error creating user {user.username}: {e}"}), 500
+                return exit_error(
+                    {"status": f"Error creating user {user.username}: {e}"}
+                ), 500
         cfuser = User.objects.get(username=user.username)
         if not cfuser.is_active:
             logging.info(f"activating user {user.username}")
@@ -412,7 +419,9 @@ def ingest_post_handler():
             logging.info(f"deactivated user {user.username}")
         except Exception as e:
             logging.error(f"error deactivating user {user.username}: {e}")
-            return exit_error({"status": f"Error deactivating user {user.username}: {e}"}), 500
+            return exit_error(
+                {"status": f"Error deactivating user {user.username}: {e}"}
+            ), 500
     cfmanager.refresh_users()
     logging.info("users synced successfully")
 
@@ -436,7 +445,9 @@ def ingest_post_handler():
                 logging.info(f"created project {project.name}")
             except Exception as e:
                 logging.error(f"error creating project {project.name}: {e}")
-                return exit_error({"status": f"Error creating project {project.name}: {e}"}), 500
+                return exit_error(
+                    {"status": f"Error creating project {project.name}: {e}"}
+                ), 500
         cfproject = Project.objects.get(title=project.name)
         cfproject.requires_review = True
         cfproject.status = project_active_status
@@ -452,7 +463,9 @@ def ingest_post_handler():
             logging.info(f"archiving project {project.name}")
         except Exception as e:
             logging.error(f"error deactivating project {project.name}: {e}")
-            return exit_error({"status": f"Error deactivating project {project.name}: {e}"}), 500
+            return exit_error(
+                {"status": f"Error deactivating project {project.name}: {e}"}
+            ), 500
     cfmanager.refresh_projects()
     logging.info("projects synced successfully")
 
@@ -461,8 +474,11 @@ def ingest_post_handler():
     cf_status_inactive = ProjectUserStatusChoice.objects.get(name="Removed")
     association_tracker = ProjectUserTracker(cfmanager.coldfront_associations)
     for manifest_project in manifest.projects:
+        logging.info(f"processing project: {manifest_project.name}")
         for username in manifest_project.users:
+            logging.info(f"processing user: {username}")
             if manifest_project.owner == username:
+                logging.info(f"skipping pi: {username}")
                 # skip PIs
                 continue
             # coldfront objects
@@ -563,7 +579,9 @@ def ingest_post_handler():
                 logging.info(f"created allocation {project.name}")
             except Exception as e:
                 logging.error(f"error creating allocation {project.name}: {e}")
-                return exit_error({"status": f"Error creating allocation {project.name}: {e}"}), 500
+                return exit_error(
+                    {"status": f"Error creating allocation {project.name}: {e}"}
+                ), 500
         allocation_tracker.tick(cf_allocation)
     for remaining_allocation in allocation_tracker.remaining():
         if remaining_allocation.status == cf_alloc_status_expired:
